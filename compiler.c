@@ -60,22 +60,24 @@ int main(int argc, char **argv) {
 
     run(rustc_argv);
 
-    // 2) objcopy → raw BIN
-    const char *objcopy = "llvm-objcopy";  // prefer llvm-objcopy
-    if (access("/usr/bin/llvm-objcopy", X_OK) != 0 &&
-        access("/usr/local/bin/llvm-objcopy", X_OK) != 0) {
-        objcopy = "rust-objcopy";          // fallback
-    }
-        char *objcopy_argv[] = {
+    // 2) ELF -> Verilog plaintext HEX (GNU objcopy required)
+    const char *objcopy = NULL;
+    if (access("/usr/bin/riscv32-unknown-elf-objcopy", X_OK) == 0)
+        objcopy = "/usr/bin/riscv32-unknown-elf-objcopy";
+    else if (access("/usr/bin/riscv64-unknown-elf-objcopy", X_OK) == 0)
+        objcopy = "/usr/bin/riscv64-unknown-elf-objcopy";
+    else
+        objcopy = "riscv64-unknown-elf-objcopy"; // hope it’s on PATH
+    
+    char *objcopy_argv[] = {
         (char*)objcopy,
-        "-O", "ihex",
-        (char*)out_elf,   // input
-        (char*)out_hex,   // output
+        "-O", "verilog",
+        (char*)out_elf,   // input ELF
+        (char*)out_hex,   // output HEX
         NULL
     };
-
-
     run(objcopy_argv);
+    
 
     fprintf(stderr, "OK: %s\n", out_hex);
     return 0;
