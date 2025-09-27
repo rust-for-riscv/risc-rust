@@ -36,11 +36,11 @@ int main(int argc, char **argv) {
         return 1;
     }
     const char *in_rs = argv[1];
-    const char *out_bin = argv[2];
+    const char *out_hex = argv[2];
 
     // Use a simple ELF path next to the bin (e.g., <output>.elf)
     char out_elf[1024];
-    snprintf(out_elf, sizeof out_elf, "%s.elf", out_bin);
+    snprintf(out_elf, sizeof out_elf, "%s.elf", out_hex);
 
     // 1) rustc → RV32I ELF (optimized for size, abort on panic)
     char *rustc_argv[] = {
@@ -63,14 +63,15 @@ int main(int argc, char **argv) {
     }
     char *objcopy_argv[] = {
         (char*)objcopy,
-        out_elf,
-        "-O", "binary",
-        (char*)out_bin,
+        "-O", "ihex",           // options first
+        (char*)out_elf,         // input ELF
+        (char*)out_hex,         // output HEX
         NULL
     };
+
     run(objcopy_argv);
 
-    fprintf(stderr, "OK: %s\n", out_bin);
+    fprintf(stderr, "OK: %s\n", out_hex);
     return 0;
 }
 
