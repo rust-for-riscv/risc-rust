@@ -50,9 +50,14 @@ int main(int argc, char **argv) {
         "-Copt-level=s",
         "-Cpanic=abort",
         "--emit=link",
+        // make the image link at 0x00000000:
+        "-Clink-arg=-Ttext=0x0",
+        "-Clink-arg=-Tdata=0x0",
+        "-Clink-arg=-Tbss=0x0",
         "-o", out_elf,
         NULL
     };
+
     run(rustc_argv);
 
     // 2) objcopy → raw BIN
@@ -61,13 +66,14 @@ int main(int argc, char **argv) {
         access("/usr/local/bin/llvm-objcopy", X_OK) != 0) {
         objcopy = "rust-objcopy";          // fallback
     }
-    char *objcopy_argv[] = {
+        char *objcopy_argv[] = {
         (char*)objcopy,
-        "-O", "ihex",           // options first
-        (char*)out_elf,         // input ELF
-        (char*)out_hex,         // output HEX
+        "-O", "ihex",
+        (char*)out_elf,   // input
+        (char*)out_hex,   // output
         NULL
     };
+
 
     run(objcopy_argv);
 
