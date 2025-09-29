@@ -10,11 +10,11 @@ module simple_memory (
     input  wire [31:0] mem_wdata,
     input  wire [3:0]  mem_wstrb,
     output reg  [31:0] mem_rdata,
-    output reg [9:0] LEDR
+    output reg  [9:0] LEDR
 );
 
-    // Memory size: 4KB = 1024 words
-    reg [31:0] memory [0:1023];
+    // Assigning only the exact amount of memory needed
+    reg [31:0] memory [5:0];
 
     // Initialize memory from firmware.hex
     initial begin
