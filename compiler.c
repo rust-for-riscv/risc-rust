@@ -43,7 +43,7 @@ static int bin_to_wordhex(const char *bin_path, const char *hex_path) {
 
     for (;;) {
         uint8_t b[4];
-        size_t n = fread(b, 1, 4, in);
+        size_t n = fread(b, sizeof(b[0]), NUM_READ, in);
         if (n == 0) break;
 
         // pad last partial word with 0x00
