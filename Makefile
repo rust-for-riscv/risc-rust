@@ -3,7 +3,7 @@ CC      := cc
 CFLAGS  := -O2 -Wall -Wextra
 
 # Paths
-SRC     := compiler.c
+SRC     := ./src/compiler.c
 BUILD   := ./build
 TARGET  := $(BUILD)/compiler
 
