@@ -1,6 +1,7 @@
 # risc-rust
 
 Usage: cargo run -- ./to_board/<filename>.rs
+or: cargo run -- /to_board/<filename>.rs /to_board/<filename>.hex
 
 TODOs:
 - Decide on open source processor, find frontend, backend, optimiser
