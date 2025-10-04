@@ -20,8 +20,9 @@
 #include <unistd.h>
 #include <stdint.h>
 #include <limits.h>
+#define WORD_LENGTH 4
 
-static void die(const char *msg) { perror(msg); exit(1); }
+static void die(const char *msg) { perror(msg); exit(errno); }
 
 static void run(char *const argv[]) {
     pid_t pid = fork();
@@ -35,27 +36,27 @@ static void run(char *const argv[]) {
     }
 }
 
-static int bin_to_wordhex(const char *bin_path, const char *hex_path) {
+int bin_to_wordhex(const char *bin_path, const char *hex_path) {
     FILE *in = fopen(bin_path, "rb");
     if (!in) return -1;
     FILE *out = fopen(hex_path, "w");
     if (!out) { fclose(in); return -2; }
 
     for (;;) {
-        uint8_t b[4];
-        size_t n = fread(b, sizeof(b[0]), NUM_READ, in);
-        if (n == 0) break;
+        uint8_t byte[WORD_LENGTH];
+        size_t len = fread(byte, sizeof(byte[0]), WORD_LENGTH, in);
+        if (len == 0) break;
 
         // pad last partial word with 0x00
-        while (n < 4) b[n++] = 0;
+        while (len < WORD_LENGTH) byte[len++] = 0;
 
         // little-endian -> 32-bit word
-        uint32_t w = (uint32_t)b[0]
-                   | ((uint32_t)b[1] << 8)
-                   | ((uint32_t)b[2] << 16)
-                   | ((uint32_t)b[3] << 24);
+        uint32_t word = (uint32_t)byte[0]
+                   | ((uint32_t)byte[1] << 8)
+                   | ((uint32_t)byte[2] << 16)
+                   | ((uint32_t)byte[3] << 24);
 
-        fprintf(out, "%08X\n", w);
+        fprintf(out, "%08X\n", word);
     }
     fclose(in);
     fclose(out);
@@ -94,25 +95,15 @@ int main(int argc, char **argv) {
 
     // 2) ELF -> Verilog plaintext HEX (GNU objcopy required)
     const char *objcopy = NULL;
-    if (access("/usr/bin/llvm-objcopy", X_OK) == 0) {
-        objcopy = "/usr/bin/llvm-objcopy";
-    } else if (access("/usr/bin/riscv64-unknown-elf-objcopy", X_OK) == 0) {
+    if (access("/usr/bin/riscv64-unknown-elf-objcopy", X_OK) == 0) {
         objcopy = "/usr/bin/riscv64-unknown-elf-objcopy";
     } else {
-        fprintf(stderr, "Need llvm-objcopy or riscv64-unknown-elf-objcopy\n");
-        exit(1);
+        die("gnu objectcopy required");
     }
 
     char out_bin[4096];
     snprintf(out_bin, sizeof(out_bin), "%s.bin", out_hex);
 
-    char *argv_llvm[] = {
-        (char*)objcopy,
-        "--output-target=binary",
-        "-S",
-        "-j", ".text", "-j", ".rodata", "-j", ".data",
-        (char*)out_elf, (char*)out_bin, NULL
-    };
     char *argv_gnu[] = {
         (char*)objcopy,
         "-O", "binary",
@@ -121,8 +112,7 @@ int main(int argc, char **argv) {
         (char*)out_elf, (char*)out_bin, NULL
     };
 
-    if (strstr(objcopy, "llvm-objcopy")) run(argv_llvm);
-    else                                 run(argv_gnu);
+    run(argv_gnu);
 
     // then convert out_bin -> out_hex (word-per-line, LE)
     if(bin_to_wordhex(out_bin, out_hex) != 0) {
