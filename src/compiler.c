@@ -119,11 +119,10 @@ int main(int argc, char **argv) {
         die("Could not create word per line hex.\n");
     }
 
-    char *argv_rm[] = {"rm", (char*)out_bin, NULL};
-
     fprintf(stderr, "OK: %s\n", out_hex);
-    run(argv_rm);
-    fprintf(stderr, "Cleanup successful.\n");
+    int removed = remove(out_bin);
+    if(removed == 0) fprintf(stderr, "Cleanup successful.\n");
+    else fprintf(stderr, "Cleanup failed.\n");
     return 0;
 }
 
