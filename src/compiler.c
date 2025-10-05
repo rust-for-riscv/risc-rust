@@ -120,6 +120,9 @@ int main(int argc, char **argv) {
     }
 
     fprintf(stderr, "OK: %s\n", out_hex);
+    int removed = remove(out_bin);
+    if(removed == 0) fprintf(stderr, "Cleanup successful.\n");
+    else fprintf(stderr, "Cleanup failed.\n");
     return 0;
 }
 
